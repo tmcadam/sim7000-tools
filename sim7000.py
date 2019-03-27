@@ -6,7 +6,7 @@ from datetime import datetime
 
 CMD_LINEBREAK = b'\r\n'
 
-PORT = "/dev/tty.usbserial-AK072UOC"
+PORT = "COM4"
 BAUD = 115200
 
 # Azure Iot Hub Settings
@@ -251,7 +251,7 @@ def mqtt_ca_cert():
     time.sleep(2)
     msg = "hi"
     # msg = "Hello Moto {}".format(datetime.now()).encode('utf-8')
-    AT('+CASEND={},{}'.format(CID, len(msg)+1)) # cid = CID, datalen = length of message
+    AT('+CASEND={},{}'.format(CID, len(msg)+1), success=">") # cid = CID, datalen = length of message
     send(msg.encode('utf-8'))
     time.sleep(2)
     AT('+CACLOSE={}'.format(CID)) # close connection, cid = CID
