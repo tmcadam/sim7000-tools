@@ -6,7 +6,7 @@ from datetime import datetime
 
 CMD_LINEBREAK = b'\r\n'
 
-PORT = "COM4"
+PORT = "/dev/tty.usbserial-AK072UOC"
 BAUD = 115200
 
 # Azure Iot Hub Settings
@@ -24,6 +24,9 @@ KEY_NAME = ""
 def main():
     global APN, IP
     # AT('+CMNB=3') # Set preference for nb-iot (doesn't work with nb-iot)
+    for i in range(10):
+        send('A'.encode('utf-8')) # extra A's to help recognize baud rate
+        time.sleep(0.5)
     AT() # Check modem is responding
     AT("+CMEE=2") # Set debug level
     # Hardware Info
@@ -241,19 +244,21 @@ def mqtt_ca_cert():
     AT("+CNACT=1") # Open wireless connection
     AT("+CNACT?") # Check connection open and have IP
 
-
-    AT('+CACID={}'.format(CID)) # set connection ID
-    AT('+CSSLCFG="sslversion",{},3'.format(CID)) # ctindex=CID, sslversion=TLS 1.2
-    AT('+CSSLCFG="convert",2,"{}"'.format(CA_NAME)) # convert server certificate
-    AT('+CASSLCFG={},ssl,1'.format(CID)) # cid = CID, ssl flag = support ssl
-    # trust all server certificates
-    AT('+CAOPEN={},"{}",8883'.format(CID, MQTT_URL)) # cid = CID
-    time.sleep(2)
-    msg = "hi"
-    # msg = "Hello Moto {}".format(datetime.now()).encode('utf-8')
-    AT('+CASEND={},{}'.format(CID, len(msg)+1), success=">") # cid = CID, datalen = length of message
-    send(msg.encode('utf-8'))
-    time.sleep(2)
+    for i in range(20):
+        AT('+CACLOSE={}'.format(CID)) # close connection, cid = CID
+        AT('+CACID={}'.format(CID)) # set connection ID
+        AT('+CSSLCFG="sslversion",{},3'.format(CID)) # ctindex=CID, sslversion=TLS 1.2
+        AT('+CSSLCFG="convert",2,"{}"'.format(CA_NAME)) # convert server certificate
+        AT('+CASSLCFG={},ssl,1'.format(CID)) # cid = CID, ssl flag = support ssl
+        # trust all server certificates
+        AT('+CAOPEN={},"{}",8883'.format(CID, MQTT_URL)) # cid = CID
+        time.sleep(2)
+        msg = "hi"
+        # msg = "Hello Moto {}".format(datetime.now()).encode('utf-8')
+        AT('+CASEND={},{}'.format(CID, len(msg)+1), success=">") # cid = CID, datalen = length of message
+        # send()
+        watch_and_send(msg, success="OK")
+        # time.sleep(2)
     AT('+CACLOSE={}'.format(CID)) # close connection, cid = CID
     AT('+CNACT=0') # Close wireless connection
 
